@@ -221,28 +221,41 @@ const CAMPAIGN_3 = {
           const campaign3 = await deployerConnectedCrowdFund.getCampaign(
             wallet2
           );
-          // const campaign3 = await deployerConnectedCrowdFund.getCampaign(wallet2Connected);
 
+          const startingContractBalance =
+            await deployerConnectedCrowdFund.provider.getBalance(
+              deployerConnectedCrowdFund.address
+            );
+
+          assert.equal(startingContractBalance, 0);
           assert.equal(campaign1.name, CAMPAIGN_1.NAME);
           assert.equal(campaign2.name, CAMPAIGN_2.NAME);
           assert.equal(campaign3.name, CAMPAIGN_3.NAME);
 
-          // await wallet1Connected.fundCampaign(deployer, { value: sendValue });
-          // await wallet2Connected.fundCampaign(deployer, { value: sendValue });
+          await wallet1Connected.fundCampaign(deployer, {
+            value: ethers.utils.parseEther("1"),
+          });
+          await wallet1Connected.fundCampaign(wallet2, {
+            value: ethers.utils.parseEther("2"),
+          });
 
-          // const startingContractBalance = await deployerConnectedCrowdFund.provider.getBalance(
-          //   deployerConnectedCrowdFund.address
-          // );
+          await wallet2Connected.fundCampaign(deployer, {
+            value: ethers.utils.parseEther("2"),
+          });
+          await wallet2Connected.fundCampaign(wallet1, {
+            value: ethers.utils.parseEther("1"),
+          });
 
-          // const contractBalanceEther = formatEther(startingContractBalance);
+          await deployerConnectedCrowdFund.fundCampaign(wallet1, {
+            value: ethers.utils.parseEther("2"),
+          });
 
-          // assert.equal(contractBalanceEther, 2);
-
-          // // Check funds allocated to campaign correctly
-          // const campaign = await deployerConnectedCrowdFund.getCampaign(deployer);
-          // assert.equal(campaign.name, CAMPAIGN_1.NAME);
-          // assert.equal(campaign.description, CAMPAIGN_1.DESCRIPTION);
-          // assert.equal(ethers.utils.formatEther(campaign.allocatedFunds), 2);
+          const contractBalanceAfterDeposit =
+            await deployerConnectedCrowdFund.provider.getBalance(
+              deployerConnectedCrowdFund.address
+            );
+          const contractBalanceEther = formatEther(contractBalanceAfterDeposit);
+          assert.equal(contractBalanceEther, 8);
         });
       });
 
