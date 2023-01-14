@@ -1,6 +1,7 @@
 const { deployments, ethers, getNamedAccounts } = require("hardhat");
 const { developmentChains } = require("../hardhat-helper");
 const { assert, expect } = require("chai");
+const { formatEther } = ethers.utils;
 
 const CAMPAIGN_1 = {
   NAME: "Philippine Charity",
@@ -15,6 +16,11 @@ const CAMPAIGN_2 = {
 const CAMPAIGN_3 = {
   NAME: "Monk Fund",
   DESCRIPTION: "We are supporitng monks",
+};
+
+const CAMPAIGN_4 = {
+  NAME: "Save the turtles",
+  DESCRIPTION: "We are saving turtles because they are cute",
 };
 
 !developmentChains.includes(network.name)
@@ -41,7 +47,7 @@ const CAMPAIGN_3 = {
       });
 
       describe("constructor", async () => {
-        it("sets aggregator address on deployment", async () => {
+        it("sets chainlink oracle price aggregator address on deployment", async () => {
           const response = await deployerConnectedCrowdFund.getPriceFeed();
           assert.equal(response, mockV3Aggresgator.address);
         });
@@ -56,6 +62,22 @@ const CAMPAIGN_3 = {
             );
           await createTxResponse.wait(1);
           await deployerConnectedCrowdFund.getCampaign(deployer);
+        });
+
+        it("doesnt allow a user to create another if they have another campaign active", async () => {
+          const createTxResponse =
+            await deployerConnectedCrowdFund.createCampaign(
+              CAMPAIGN_1.NAME,
+              CAMPAIGN_1.DESCRIPTION
+            );
+          await createTxResponse.wait(1);
+
+          await expect(
+            deployerConnectedCrowdFund.createCampaign(
+              CAMPAIGN_2.NAME,
+              CAMPAIGN_2.DESCRIPTION
+            )
+          ).to.be.revertedWith("You have an active campaign");
         });
 
         it("it allows multiple different campaigns to be made", async () => {
@@ -138,7 +160,6 @@ const CAMPAIGN_3 = {
         });
 
         it("will deposit funds into a campaign", async () => {
-          const { formatEther } = ethers.utils;
           const startingContractBalance =
             await deployerConnectedCrowdFund.provider.getBalance(
               deployerConnectedCrowdFund.address
@@ -161,8 +182,6 @@ const CAMPAIGN_3 = {
         });
 
         it("will handle multiple people adding funds to campaign", async () => {
-          const { formatEther } = ethers.utils;
-
           const wallet1 = (await getNamedAccounts()).wallet1;
           const wallet2 = (await getNamedAccounts()).wallet2;
 
@@ -191,8 +210,6 @@ const CAMPAIGN_3 = {
         });
 
         it("will handle multiple people adding funds to multiple campaigns", async () => {
-          const { formatEther } = ethers.utils;
-
           const wallet1 = (await getNamedAccounts()).wallet1;
           const wallet2 = (await getNamedAccounts()).wallet2;
 
@@ -260,142 +277,227 @@ const CAMPAIGN_3 = {
       });
 
       describe("withdraw", async () => {
-        // beforeEach(async () => {
-        //   await deployerConnectedCrowdFund.fund({ value: sendValue });
-        // });
-        // it("can withdraw eth as a founder", async () => {
-        //   //A Arrange
-        //   // Act
-        //   // Assert
-        //   const startingContractBalance = await fundMe.provider.getBalance(
-        //     fundMe.address
-        //   );
-        //   const startingDeployerBalance = await fundMe.provider.getBalance(
-        //     deployer
-        //   );
-        //   const txResponse = await fundMe.withdraw();
-        //   const txReciept = await txResponse.wait(1);
-        //   const { gasUsed, effectiveGasPrice } = txReciept;
-        //   const totalGasCost = gasUsed.mul(effectiveGasPrice);
-        //   const endingContractBalance = await fundMe.provider.getBalance(
-        //     fundMe.address
-        //   );
-        //   const endingDeployerBalance = await fundMe.provider.getBalance(
-        //     deployer
-        //   );
-        //   assert.equal(endingContractBalance, 0);
-        //   assert.equal(
-        //     startingContractBalance.add(startingDeployerBalance).toString(),
-        //     endingDeployerBalance.add(totalGasCost).toString()
-        //   );
-        // });
-        // it("can withdraw eth as a founder (cheaper)", async () => {
-        //   //A Arrange
-        //   // Act
-        //   // Assert
-        //   const startingContractBalance = await fundMe.provider.getBalance(
-        //     fundMe.address
-        //   );
-        //   const startingDeployerBalance = await fundMe.provider.getBalance(
-        //     deployer
-        //   );
-        //   const txResponse = await fundMe.cheaperWithdraw();
-        //   const txReciept = await txResponse.wait(1);
-        //   const { gasUsed, effectiveGasPrice } = txReciept;
-        //   const totalGasCost = gasUsed.mul(effectiveGasPrice);
-        //   const endingContractBalance = await fundMe.provider.getBalance(
-        //     fundMe.address
-        //   );
-        //   const endingDeployerBalance = await fundMe.provider.getBalance(
-        //     deployer
-        //   );
-        //   assert.equal(endingContractBalance, 0);
-        //   assert.equal(
-        //     startingContractBalance.add(startingDeployerBalance).toString(),
-        //     endingDeployerBalance.add(totalGasCost).toString()
-        //   );
-        // });
-        // it("allows us to withdraw ith multuple funders", async () => {
-        //   const accounts = await ethers.getSigners();
-        //   for (let i = 1; i < 6; i++) {
-        //     // No longer connected to deployer
-        //     const fundMeConnectedContract = await fundMe.connect(accounts[i]);
-        //     await fundMeConnectedContract.fund({ value: sendValue });
-        //     const startingContractBalance = await fundMe.provider.getBalance(
-        //       fundMe.address
-        //     );
-        //     const startingDeployerBalance = await fundMe.provider.getBalance(
-        //       deployer
-        //     );
-        //     const txResponse = await fundMe.withdraw();
-        //     const txReciept = await txResponse.wait(1);
-        //     const { gasUsed, effectiveGasPrice } = txReciept;
-        //     const totalGasCost = gasUsed.mul(effectiveGasPrice);
-        //     const endingContractBalance = await fundMe.provider.getBalance(
-        //       fundMe.address
-        //     );
-        //     const endingDeployerBalance = await fundMe.provider.getBalance(
-        //       deployer
-        //     );
-        //     assert.equal(endingContractBalance, 0);
-        //     assert.equal(
-        //       startingContractBalance.add(startingDeployerBalance).toString(),
-        //       endingDeployerBalance.add(totalGasCost).toString()
-        //     );
-        //     // Make sure funders is reset
-        //     await expect(fundMe.getFunder(0)).to.be.reverted;
-        //     for (i = 1; i < 6; i++) {
-        //       assert.equal(
-        //         await fundMe.getAddressToAmountFunded(accounts[i].address),
-        //         0
-        //       );
-        //     }
-        //   }
-        // });
-        // it("cheaper withdraw testing", async () => {
-        //   const accounts = await ethers.getSigners();
-        //   for (let i = 1; i < 6; i++) {
-        //     // No longer connected to deployer
-        //     const fundMeConnectedContract = await fundMe.connect(accounts[i]);
-        //     await fundMeConnectedContract.fund({ value: sendValue });
-        //     const startingContractBalance = await fundMe.provider.getBalance(
-        //       fundMe.address
-        //     );
-        //     const startingDeployerBalance = await fundMe.provider.getBalance(
-        //       deployer
-        //     );
-        //     const txResponse = await fundMe.cheaperWithdraw();
-        //     const txReciept = await txResponse.wait(1);
-        //     const { gasUsed, effectiveGasPrice } = txReciept;
-        //     const totalGasCost = gasUsed.mul(effectiveGasPrice);
-        //     const endingContractBalance = await fundMe.provider.getBalance(
-        //       fundMe.address
-        //     );
-        //     const endingDeployerBalance = await fundMe.provider.getBalance(
-        //       deployer
-        //     );
-        //     assert.equal(endingContractBalance, 0);
-        //     assert.equal(
-        //       startingContractBalance.add(startingDeployerBalance).toString(),
-        //       endingDeployerBalance.add(totalGasCost).toString()
-        //     );
-        //     // Make sure funders is reset
-        //     await expect(fundMe.getFunder(0)).to.be.reverted;
-        //     for (i = 1; i < 6; i++) {
-        //       assert.equal(
-        //         await fundMe.getAddressToAmountFunded(accounts[i].address),
-        //         0
-        //       );
-        //     }
-        //   }
-        // });
-        // it("only allows owner to withdraw", async () => {
-        //   const accounts = await ethers.getSigners();
-        //   const attacker = accounts[1];
-        //   const attackedConnected = await fundMe.connect(attacker);
-        // await expect(
-        //   attackedConnected.withdraw()
-        // ).to.be.revertedWithCustomError(fundMe, "FundMe__NotOwner");
-        // });
+        beforeEach(async () => {
+          const createTxResponse1 =
+            await deployerConnectedCrowdFund.createCampaign(
+              CAMPAIGN_1.NAME,
+              CAMPAIGN_1.DESCRIPTION
+            );
+          await createTxResponse1.wait(1);
+        });
+        it("handles creating, depositing funds and allow campaign owner to wirthdraw", async () => {
+          const wallet1 = (await getNamedAccounts()).wallet1;
+          const wallet2 = (await getNamedAccounts()).wallet2;
+
+          const wallet1Connected = await ethers.getContract(
+            "CrowdFunder",
+            wallet1
+          );
+          const wallet2Connected = await ethers.getContract(
+            "CrowdFunder",
+            wallet2
+          );
+
+          const startingContractBalance =
+            await deployerConnectedCrowdFund.provider.getBalance(
+              deployerConnectedCrowdFund.address
+            );
+
+          const deployerStartingBalance =
+            await deployerConnectedCrowdFund.provider.getBalance(deployer);
+
+          const deployerStart = formatEther(deployerStartingBalance);
+          // console.log("START: ", deployerStart);
+
+          await wallet1Connected.fundCampaign(deployer, {
+            value: ethers.utils.parseEther("2"),
+          });
+          await wallet2Connected.fundCampaign(deployer, {
+            value: ethers.utils.parseEther("10"),
+          });
+
+          const contractBalanceAfterDeposit =
+            await deployerConnectedCrowdFund.provider.getBalance(
+              deployerConnectedCrowdFund.address
+            );
+
+          assert.equal(startingContractBalance, 0);
+
+          const afterDeposit = formatEther(contractBalanceAfterDeposit);
+          assert.equal(afterDeposit, 12);
+
+          const txResponse =
+            await deployerConnectedCrowdFund.withdrawFundsFromCampaign();
+          const txReciept = await txResponse.wait(1);
+
+          const { gasUsed, effectiveGasPrice } = txReciept;
+          const totalGasCost = gasUsed.mul(effectiveGasPrice);
+          const endingContractBalance =
+            await deployerConnectedCrowdFund.provider.getBalance(
+              deployerConnectedCrowdFund.address
+            );
+
+          const deploerEndingBalance =
+            await deployerConnectedCrowdFund.provider.getBalance(deployer);
+
+          const deployerEnd = formatEther(deploerEndingBalance);
+          // console.log("START: ", deployerEnd);
+          assert.equal(endingContractBalance, 0);
+          // assert.equal(
+          //   startingContractBalance.add(deployerStartingBalance).toString(),
+          //   deploerEndingBalance.add(totalGasCost).toString()
+          // );
+        });
+        it("handles multiple contracts with funds and respective owners withdrawing their allocation", async () => {
+          const wallet1 = (await getNamedAccounts()).wallet1;
+          const wallet2 = (await getNamedAccounts()).wallet2;
+
+          wallet1Connected = await ethers.getContract("CrowdFunder", wallet1);
+          wallet2Connected = await ethers.getContract("CrowdFunder", wallet2);
+
+          const createTxResponse1 = await wallet1Connected.createCampaign(
+            CAMPAIGN_2.NAME,
+            CAMPAIGN_2.DESCRIPTION
+          );
+          await createTxResponse1.wait(1);
+
+          const createTxResponse2 = await wallet2Connected.createCampaign(
+            CAMPAIGN_3.NAME,
+            CAMPAIGN_3.DESCRIPTION
+          );
+          await createTxResponse2.wait(1);
+
+          // Check campaigns
+          const campaign1 = await deployerConnectedCrowdFund.getCampaign(
+            deployer
+          );
+          const campaign2 = await deployerConnectedCrowdFund.getCampaign(
+            wallet1
+          );
+          const campaign3 = await deployerConnectedCrowdFund.getCampaign(
+            wallet2
+          );
+
+          const startingContractBalance =
+            await deployerConnectedCrowdFund.provider.getBalance(
+              deployerConnectedCrowdFund.address
+            );
+
+          assert.equal(startingContractBalance, 0);
+          assert.equal(campaign1.name, CAMPAIGN_1.NAME);
+          assert.equal(campaign2.name, CAMPAIGN_2.NAME);
+          assert.equal(campaign3.name, CAMPAIGN_3.NAME);
+
+          await wallet1Connected.fundCampaign(deployer, {
+            value: ethers.utils.parseEther("1"),
+          });
+          await wallet1Connected.fundCampaign(wallet2, {
+            value: ethers.utils.parseEther("2"),
+          });
+
+          await wallet2Connected.fundCampaign(deployer, {
+            value: ethers.utils.parseEther("2"),
+          });
+          await wallet2Connected.fundCampaign(wallet1, {
+            value: ethers.utils.parseEther("1"),
+          });
+
+          await deployerConnectedCrowdFund.fundCampaign(wallet1, {
+            value: ethers.utils.parseEther("2"),
+          });
+
+          const contractBalanceAfterDeposit =
+            await deployerConnectedCrowdFund.provider.getBalance(
+              deployerConnectedCrowdFund.address
+            );
+          const contractBalanceEther = formatEther(contractBalanceAfterDeposit);
+          assert.equal(contractBalanceEther, 8);
+
+          const txResponse =
+            await deployerConnectedCrowdFund.withdrawFundsFromCampaign();
+          await txResponse.wait(1);
+
+          const contractBalanceAfteDeployerWithdraw =
+            await deployerConnectedCrowdFund.provider.getBalance(
+              deployerConnectedCrowdFund.address
+            );
+          const parsedBalance = formatEther(
+            contractBalanceAfteDeployerWithdraw
+          );
+          assert.equal(parsedBalance, 5);
+
+          const txResponse2 =
+            await wallet1Connected.withdrawFundsFromCampaign();
+          await txResponse2.wait(1);
+
+          const contractBalanceAfteDeployerWithdraw2 =
+            await deployerConnectedCrowdFund.provider.getBalance(
+              deployerConnectedCrowdFund.address
+            );
+          const parsedBalance2 = formatEther(
+            contractBalanceAfteDeployerWithdraw2
+          );
+          assert.equal(parsedBalance2, 2);
+
+          const txResponse3 =
+            await wallet2Connected.withdrawFundsFromCampaign();
+          await txResponse3.wait(1);
+
+          const contractBalanceAfteDeployerWithdraw3 =
+            await deployerConnectedCrowdFund.provider.getBalance(
+              deployerConnectedCrowdFund.address
+            );
+          const parsedBalance3 = formatEther(
+            contractBalanceAfteDeployerWithdraw3
+          );
+          assert.equal(parsedBalance3, 0);
+        });
+
+        it("allows campaign owner to start new campaign after claiming funds of previous one", async () => {
+          const wallet1 = (await getNamedAccounts()).wallet1;
+          const wallet2 = (await getNamedAccounts()).wallet2;
+
+          wallet1Connected = await ethers.getContract("CrowdFunder", wallet1);
+          wallet2Connected = await ethers.getContract("CrowdFunder", wallet2);
+
+          await wallet1Connected.fundCampaign(deployer, { value: sendValue });
+          await wallet2Connected.fundCampaign(deployer, { value: sendValue });
+
+          const startingContractBalance =
+            await deployerConnectedCrowdFund.provider.getBalance(
+              deployerConnectedCrowdFund.address
+            );
+
+          const contractBalanceEther = formatEther(startingContractBalance);
+
+          assert.equal(contractBalanceEther, 2);
+
+          const txResponse =
+            await deployerConnectedCrowdFund.withdrawFundsFromCampaign();
+          await txResponse.wait(1);
+
+          const contractBalanceAfteDeployerWithdraw =
+            await deployerConnectedCrowdFund.provider.getBalance(
+              deployerConnectedCrowdFund.address
+            );
+          const parsedBalance = formatEther(
+            contractBalanceAfteDeployerWithdraw
+          );
+          assert.equal(parsedBalance, 0);
+
+          const createNewCampaign =
+            await deployerConnectedCrowdFund.createCampaign(
+              CAMPAIGN_2.NAME,
+              CAMPAIGN_2.DESCRIPTION
+            );
+          await createNewCampaign.wait(1);
+
+          const campaign = await deployerConnectedCrowdFund.getCampaign(
+            deployer
+          );
+          assert.equal(campaign.name, CAMPAIGN_2.NAME);
+          assert.equal(campaign.description, CAMPAIGN_2.DESCRIPTION);
+          assert.equal(ethers.utils.formatEther(campaign.allocatedFunds), 0);
+        });
       });
     });

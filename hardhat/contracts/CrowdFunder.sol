@@ -14,7 +14,6 @@ error CreateCampaign__MissingValues();
  */
 
 contract CrowdFunder {
-    // Type declarations
     using PriceConverter for uint256;
 
     struct Campaign {
@@ -24,8 +23,6 @@ contract CrowdFunder {
         address owner;
     }
 
-    // State variables
-    // If you know value at compile time
     // uint256 public constant MINIMUM_USD = 50 * 1e18;
     address private immutable i_owner;
     mapping(address => Campaign) public s_addressToCampaign;
@@ -52,11 +49,19 @@ contract CrowdFunder {
     //     createCampaign();
     // }
 
+    /**  
+        @dev If a wallet has an anctive campaign (campaign with funds) we should not allow them to create another
+    */
     function createCampaign(string memory _name, string memory _description)
         public
         payable
     {
-        // Store campaign based on contract caller wallet address
+        if (
+            keccak256(abi.encodePacked(s_addressToCampaign[msg.sender].name)) !=
+            keccak256(abi.encodePacked(""))
+        ) {
+            revert("You have an active campaign");
+        }
         s_addressToCampaign[msg.sender] = Campaign(
             0,
             _name,
@@ -65,6 +70,9 @@ contract CrowdFunder {
         );
     }
 
+    /**  
+        @dev Stop any funds coming into the contract if a campaign does not exist
+    */
     function fundCampaign(address campaignAddress) public payable {
         if (s_addressToCampaign[campaignAddress].owner == address(0)) {
             revert("Address has no campaign");
@@ -76,6 +84,9 @@ contract CrowdFunder {
             msg.value;
     }
 
+    /**  
+        @dev Campaign owners (set by wallet address) are able to withdraw funds deposited to them - aftet this the campain should be reset
+    */
     function withdrawFundsFromCampaign() public payable {
         Campaign memory campaign = s_addressToCampaign[msg.sender];
         if (campaign.allocatedFunds > 0) {
@@ -83,6 +94,9 @@ contract CrowdFunder {
                 value: campaign.allocatedFunds
             }("");
             campaign.allocatedFunds = 0;
+            campaign.name = "";
+            campaign.description = "";
+            s_addressToCampaign[msg.sender] = campaign;
         }
     }
 
