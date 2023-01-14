@@ -18,17 +18,17 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     ethUsdPriceFeedAddress = networkConfig[chainId]["ethUsdPriceFeed"];
   }
   log("----------------------------------------------------");
-  log("Deploying FundMe and waiting for confirmations...");
+  log("Deploying CrowdFunder and waiting for confirmations...");
 
   const args = [ethUsdPriceFeedAddress];
-  const fundMe = await deploy("FundMe", {
+  const fundMe = await deploy("CrowdFunder", {
     from: deployer,
     args: args,
     log: true,
     // we need to wait if on a live network so we can verify properly
     waitConfirmations: network.config.blockConfirmations || 1,
   });
-  log(`FundMe deployed at ${fundMe.address}`);
+  log(`CrowdFunder deployed at ${fundMe.address}`);
 
   if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API) {
     await verify(fundMe.address, args);

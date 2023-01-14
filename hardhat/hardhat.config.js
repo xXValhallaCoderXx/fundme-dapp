@@ -42,5 +42,11 @@ module.exports = {
     deployer: {
       default: 0,
     },
+    wallet1: {
+      default: 1,
+    },
+    wallet2: {
+      default: 2,
+    },
   },
 };
