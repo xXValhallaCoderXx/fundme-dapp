@@ -6,9 +6,17 @@ import { ConnectButton } from "../ConnectButton";
 import xSendImg from "../../images/x-send-2.jpg";
 import { useLocation, useNavigate } from "react-router-dom";
 
+import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { InjectedConnector } from "wagmi/connectors/injected";
+
 const NavigationHeader = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { address, isConnected } = useAccount();
+  const { connect } = useConnect({
+    connector: new InjectedConnector(),
+  });
+  const { disconnect } = useDisconnect();
 
   const ROUTES = {
     "/": {
@@ -52,7 +60,14 @@ const NavigationHeader = () => {
           >
             {ROUTES[location.pathname].label}
           </Button>
-
+          {isConnected ? (
+            <div>
+              Connected to {address}
+              <button onClick={() => disconnect()}>Disconnect</button>
+            </div>
+          ) : (
+            <button onClick={() => connect()}>Connect Wallet</button>
+          )}
           {/* <ConnectButton onClick={handleConnectWallet} address={address} /> */}
         </div>
       </Toolbar>

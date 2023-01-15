@@ -14,17 +14,41 @@ import { RouterProvider } from "react-router-dom";
 import routes from "./routes.js";
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider } from "@mui/material/styles";
+import { WagmiConfig, createClient, configureChains, mainnet } from "wagmi";
+import { getDefaultProvider } from "ethers";
+import { publicProvider } from "wagmi/providers/public";
+import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
+import { MetaMaskConnector } from "wagmi/connectors/metaMask";
 
 import theme from "./style/theme";
+
+const { chains, provider, webSocketProvider } = configureChains(
+  [mainnet],
+  [publicProvider()]
+);
+
+const client = createClient({
+  autoConnect: true,
+  connectors: [new MetaMaskConnector({ chains })],
+  provider,
+  webSocketProvider,
+});
+
+// const client = createClient({
+//   autoConnect: true,
+//   provider: getDefaultProvider(),
+// });
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <RouterProvider router={routes} />
-      <ToastContainer />
-    </ThemeProvider>
+    <WagmiConfig client={client}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <RouterProvider router={routes} />
+        <ToastContainer />
+      </ThemeProvider>
+    </WagmiConfig>
   </React.StrictMode>
 );
 

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
+pragma experimental ABIEncoderV2;
+
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "./PriceConverter.sol";
 
@@ -28,6 +30,8 @@ contract CrowdFunder {
     mapping(address => Campaign) public s_addressToCampaign;
 
     AggregatorV3Interface private s_priceFeed;
+
+    event savingsEvent(uint256 indexed _memberId);
 
     // Modifers
     modifier onlyOwner() {

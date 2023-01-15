@@ -4,6 +4,7 @@ require("@nomiclabs/hardhat-ethers");
 require("hardhat-deploy");
 
 module.exports = {
+  defaultNetwork: "hardhat",
   solidity: {
     compilers: [
       {
