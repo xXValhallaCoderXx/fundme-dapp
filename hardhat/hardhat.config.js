@@ -4,6 +4,7 @@ require("@nomiclabs/hardhat-ethers");
 require("hardhat-deploy");
 
 module.exports = {
+  defaultNetwork: "hardhat",
   solidity: {
     compilers: [
       {
@@ -41,6 +42,12 @@ module.exports = {
   namedAccounts: {
     deployer: {
       default: 0,
+    },
+    wallet1: {
+      default: 1,
+    },
+    wallet2: {
+      default: 2,
     },
   },
 };
