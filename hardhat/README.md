@@ -13,7 +13,3 @@ npx hardhat run scripts/deploy.js
 ```
 
 ### https://goerli.etherscan.io/address/0x75a79217f8Ab41aC8555b690a67a4c3618aAbdE7#code
-
-
-hello
-bye
